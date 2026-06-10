@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Club Leader Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#C7053D;--red-l:#FDF0F3;
+  --grn:#8CC04B;--grn-d:#5E8A27;--grn-l:#F3F8E8;
+  --dark:#111827;--slate:#374151;--muted:#6B7280;
+  --bg:#F9FAFB;--white:#FFFFFF;--border:#E5E7EB;
+  --amber:#D97706;--amber-l:#FFFBEB;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh;display:flex;flex-direction:column}
+
+/* TOP BAR */
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:30px;height:30px}
+.logo-text{font-weight:700;font-size:15px;color:var(--red)}
+.topbar-divider{width:1px;height:26px;background:var(--border)}
+.topbar-label{font-size:12px;color:var(--muted)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:9px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.avatar-name{font-size:13px;font-weight:600;color:var(--slate)}
+
+/* LAYOUT */
+.layout{display:flex;flex:1}
+
+/* SIDEBAR */
+.sidebar{width:216px;background:var(--white);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;display:flex;flex-direction:column;gap:1px}
+.nav-lbl{font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--muted);padding:6px 20px 2px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 20px;font-size:13px;font-weight:500;color:var(--slate);cursor:pointer;transition:background .1s}
+.nav-item:hover:not(.dim){background:var(--bg)}
+.nav-item.active{background:var(--grn-l);color:var(--grn-d);font-weight:700;border-right:3px solid var(--grn-d)}
+.nav-item.dim{opacity:.42;cursor:default}
+.badge{font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--border);color:var(--muted);margin-left:auto}
+.nav-sep{height:1px;background:var(--border);margin:10px 16px}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto}
+.content{max-width:820px;margin:0 auto;padding:32px 32px 60px}
+
+/* BANNER */
+.banner{background:var(--red);color:white;border-radius:14px;padding:22px 28px;margin-bottom:24px}
+.banner h2{font-family:'DM Serif Display',serif;font-size:21px;font-weight:400;margin-bottom:5px}
+.banner p{font-size:13px;opacity:.9;line-height:1.55}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:24px}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:24px}
+
+/* TIMELINE */
+.timeline{display:flex;align-items:flex-start;position:relative;margin-bottom:28px}
+.timeline::before{content:'';position:absolute;top:22px;left:22px;right:22px;height:2px;background:var(--border);z-index:0}
+.t-node{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:1;cursor:pointer}
+.t-circle{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--border);background:var(--white);transition:all .15s;position:relative}
+.t-circle:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.t-circle.done{background:var(--grn-d);border-color:var(--grn-d);color:white}
+.t-circle.current{background:var(--red);border-color:var(--red);color:white;box-shadow:0 0 0 5px var(--red-l)}
+.t-circle.upcoming{background:var(--white);color:var(--muted)}
+.here-pill{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--red);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap;letter-spacing:.04em}
+.t-label{font-size:11px;font-weight:700;margin-top:8px;color:var(--dark);text-align:center}
+.t-line{flex:1;height:2px;margin-top:22px;background:var(--border)}
+.t-line.done{background:var(--grn-d)}
+
+/* CHECKLIST (always visible) */
+.cl-tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap}
+.cl-tab{padding:6px 14px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid var(--border);cursor:pointer;background:var(--white);color:var(--muted);transition:all .12s}
+.cl-tab:hover{border-color:var(--red);color:var(--red)}
+.cl-tab.active{background:var(--red);border-color:var(--red);color:white}
+.cl-tab.done-tab{border-color:var(--grn-d);color:var(--grn-d)}
+.cl-tab.done-tab.active{background:var(--grn-d);border-color:var(--grn-d);color:white}
+.cl-panel{display:none}
+.cl-panel.open{display:block}
+.progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.progress-row span{font-size:12px;color:var(--muted)}
+.progress-row strong{font-size:12px;color:var(--grn-d);font-weight:700}
+.pbar-wrap{background:var(--bg);border-radius:99px;height:5px;margin-bottom:18px;overflow:hidden}
+.pbar{height:100%;background:var(--grn-d);border-radius:99px;transition:width .35s}
+.cl-item{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.cl-item:last-child{border-bottom:none;padding-bottom:0}
+.cl-box{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.cl-box.checked{background:var(--grn-d);border-color:var(--grn-d)}
+.cl-box.checked::after{content:'✓';color:white;font-size:11px;font-weight:700}
+.cl-text{font-size:13px;color:var(--slate);line-height:1.5;flex:1}
+.cl-text.struck{color:var(--muted);text-decoration:line-through}
+
+/* VENUE NUDGE CARD */
+.venue-card{background:var(--white);border:1.5px solid var(--grn);border-radius:14px;padding:20px 22px;margin-bottom:24px;display:flex;align-items:flex-start;gap:14px;position:relative}
+.venue-icon{font-size:26px;flex-shrink:0;margin-top:2px}
+.venue-body{flex:1}
+.venue-title{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:5px}
+.venue-text{font-size:13px;color:var(--slate);line-height:1.55;margin-bottom:14px}
+.venue-btn{padding:8px 18px;background:var(--grn-d);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .12s}
+.venue-btn:hover{opacity:.88}
+.venue-dismiss{position:absolute;top:14px;right:14px;background:none;border:none;font-size:15px;color:var(--muted);cursor:pointer;line-height:1;padding:2px}
+.venue-dismiss:hover{color:var(--dark)}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:white;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-x{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
+.modal-body{font-size:13px;color:var(--slate);line-height:1.6;margin-bottom:20px}
+.modal-btn{width:100%;padding:11px;background:var(--red);color:white;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+.radio-opt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--slate);cursor:pointer;padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;font-weight:500}
+.radio-opt input{accent-color:var(--red);width:14px;height:14px;cursor:pointer}
+
+/* PROTO */
+.proto{position:fixed;bottom:18px;right:18px;background:rgba(17,24,39,.75);color:white;font-size:10px;font-weight:600;padding:5px 12px;border-radius:99px;pointer-events:none;z-index:300}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 30 30" fill="none">
+      <circle cx="15" cy="15" r="15" fill="#C7053D"/>
+      <path d="M8 10h8a5 5 0 010 10H8V10z" fill="white"/>
+      <circle cx="19" cy="19.5" r="3.5" fill="white"/>
+    </svg>
+    <span class="logo-text">Code Club</span>
+  </div>
+  <div class="topbar-divider"></div>
+  <span class="topbar-label">Leader Dashboard</span>
+  <div class="topbar-right">
+    <div class="avatar">AS</div>
+    <span class="avatar-name">Alex Smith</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-lbl">Menu</div>
+    <div class="nav-item active">🏠 My Journey</div>
+    <div class="nav-sep"></div>
+    <div class="nav-lbl">Coming next</div>
+    <div class="nav-item dim">📚 Teaching materials <span class="badge">v2</span></div>
+    <div class="nav-item dim">📦 Self-help kits <span class="badge">v2</span></div>
+    <div class="nav-item dim">📅 Session calendar <span class="badge">v2</span></div>
+    <div class="nav-item dim">👥 Common Room <span class="badge">v3</span></div>
+    <div class="nav-item dim">❓ Support <span class="badge">v3</span></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="content">
+
+      <!-- BANNER -->
+      <div class="banner">
+        <h2>You are a confirmed Code Club Leader 🎉</h2>
+        <p>Welcome to the community. Use this dashboard to track your progress and see what comes next for your club.</p>
+      </div>
+
+      <!-- IN-PERSON VENUE NUDGE -->
+      <div class="venue-card" id="venue-card">
+        <div class="venue-icon">🏫</div>
+        <div class="venue-body">
+          <div class="venue-title">Planning to run your sessions in person?</div>
+          <div class="venue-text">Let us know your venue details and preferred schedule so Code Club can support you with local resources, safeguarding guidance, and community connections.</div>
+          <button class="venue-btn" onclick="openVenueModal()">Share your venue details</button>
+        </div>
+        <button class="venue-dismiss" onclick="dismissVenue()" title="Dismiss">✕</button>
+      </div>
+
+      <!-- JOURNEY + CHECKLIST CARD -->
+      <div class="card">
+        <div class="card-title">Your journey</div>
+        <div class="card-sub">Click any milestone to view and update its checklist</div>
+
+        <!-- TIMELINE -->
+        <div class="timeline">
+          <div class="t-node" onclick="selectNode('day0')">
+            <div class="t-circle done" id="circ-day0">✓</div>
+            <div class="t-label">Day 0</div>
+          </div>
+          <div class="t-line done"></div>
+          <div class="t-node" onclick="selectNode('day7')">
+            <div class="t-circle current" id="circ-day7">
+              <div class="here-pill">▶ You are here</div>
+              7
+            </div>
+            <div class="t-label">Day 7</div>
+          </div>
+          <div class="t-line"></div>
+          <div class="t-node" onclick="selectNode('day14')">
+            <div class="t-circle upcoming" id="circ-day14">14</div>
+            <div class="t-label">Day 14</div>
+          </div>
+          <div class="t-line"></div>
+          <div class="t-node" onclick="selectNode('day30')">
+            <div class="t-circle upcoming" id="circ-day30">30</div>
+            <div class="t-label">Day 30</div>
+          </div>
+          <div class="t-line"></div>
+          <div class="t-node" onclick="selectNode('day90')">
+            <div class="t-circle upcoming" id="circ-day90">90</div>
+            <div class="t-label">Day 90</div>
+          </div>
+          <div class="t-line"></div>
+          <div class="t-node" onclick="showModal()">
+            <div class="t-circle upcoming">🌱</div>
+            <div class="t-label">Ongoing</div>
+          </div>
+        </div>
+
+        <!-- CHECKLIST TABS -->
+        <div class="cl-tabs" id="cl-tabs"></div>
+
+        <!-- CHECKLIST PANELS -->
+        <div id="cl-panels"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="proto">Prototype · Not for production</div>
+
+<!-- VENUE MODAL -->
+<div class="overlay" id="venue-overlay" onclick="if(event.target===this)closeVenueModal()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hdr">
+      <div class="modal-title">Tell us about your venue</div>
+      <button class="modal-x" onclick="closeVenueModal()">✕</button>
+    </div>
+    <div class="modal-body" style="margin-bottom:16px">
+      This helps Code Club send you the right resources at the right time — whether you're meeting in a school hall, a library, or a video call.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--slate);display:block;margin-bottom:5px">How will your club run?</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="radio-opt"><input type="radio" name="format" value="inperson" onchange="toggleVenueFields(this)"> In person</label>
+          <label class="radio-opt"><input type="radio" name="format" value="mix" onchange="toggleVenueFields(this)"> In person and online mixed</label>
+        </div>
+      </div>
+      <div id="venue-fields" style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--slate);display:block;margin-bottom:5px">Venue name or address <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+          <input type="text" placeholder="e.g. Whitmore Primary School, Room 4" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--slate);display:block;margin-bottom:5px">Preferred day and time <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+        <input type="text" placeholder="e.g. Thursdays at 3:30 pm" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--slate);display:block;margin-bottom:5px">Anything else you would like support with? <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+        <textarea rows="2" placeholder="e.g. safeguarding advice, equipment, finding a co-volunteer…" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;resize:none;outline:none" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+    </div>
+    <button class="modal-btn" onclick="submitVenue()">Send to Code Club</button>
+  </div>
+</div>
+
+<!-- ONGOING MODAL -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Ongoing — Thriving club 🌱</div>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">Once you have confirmed active status at Day 90, you unlock access to peer community features, advanced resources, and RPF recognition. The goal is a club that runs regularly, grows its membership, and makes a lasting difference for young people in your area.</div>
+    <button class="modal-btn" onclick="closeModal()">Got it</button>
+  </div>
+</div>
+
+<script>
+var checklists = {
+  day0: {
+    label: 'Day 0',
+    items: [
+      { id:'d0a', text:'Complete your club profile' },
+      { id:'d0b', text:'Receive your welcome confirmation from Code Club' },
+    ]
+  },
+  day7: {
+    label: 'Day 7',
+    items: [
+      { id:'d7a', text:'Confirm how your club will run — in person, online, or a mix of both' },
+      { id:'d7b', text:'Lock in a regular time and place (or platform) for your sessions' },
+      { id:'d7c', text:'Invite a co-volunteer or mentor if you would like extra support' },
+    ]
+  },
+  day14: {
+    label: 'Day 14',
+    items: [
+      { id:'d14a', text:'Browse the RPF project library and choose a starting project' },
+      { id:'d14b', text:'Make sure your setup — devices, accounts, or video platform — is ready for learners' },
+      { id:'d14c', text:'Let your learners (or their parents and guardians) know when you start' },
+    ]
+  },
+  day30: {
+    label: 'Day 30',
+    items: [
+      { id:'d30a', text:'Run your first session with learners' },
+      { id:'d30b', text:'Log the session in your club profile' },
+      { id:'d30c', text:'Share how it went — your feedback helps RPF improve support for all leaders' },
+    ]
+  },
+  day90: {
+    label: 'Day 90',
+    items: [
+      { id:'d90a', text:'Confirm your club is running regularly' },
+      { id:'d90b', text:'Reflect on your first 90 days and share any feedback with RPF' },
+      { id:'d90c', text:'Explore what comes next for your club and community' },
+    ]
+  }
+};
+
+// Default all day0 items checked
+var checked = { d0a:true, d0b:true };
+var activeKey = 'day7';
+var keys = ['day0','day7','day14','day30','day90'];
+
+function buildAll() {
+  // Build tabs
+  var tabHtml = '';
+  keys.forEach(function(k) {
+    var d = checklists[k];
+    var isDone = d.items.every(function(i){ return checked[i.id]; });
+    var isActive = k === activeKey;
+    tabHtml += '<div class="cl-tab' + (isDone?' done-tab':'') + (isActive?' active':'') + '" onclick="selectNode(\'' + k + '\')" id="tab-' + k + '">'
+      + (isDone?'✓ ':'') + d.label + '</div>';
+  });
+  document.getElementById('cl-tabs').innerHTML = tabHtml;
+
+  // Build panels
+  var panelHtml = '';
+  keys.forEach(function(k) {
+    var d = checklists[k];
+    var doneCount = d.items.filter(function(i){ return checked[i.id]; }).length;
+    var total = d.items.length;
+    var pct = Math.round(doneCount/total*100);
+    var isOpen = k === activeKey;
+    panelHtml += '<div class="cl-panel' + (isOpen?' open':'') + '" id="panel-' + k + '">';
+    panelHtml += '<div class="progress-row"><span id="ptxt-'+k+'">' + doneCount + ' of ' + total + ' completed</span><strong id="ppct-'+k+'">' + pct + '%</strong></div>';
+    panelHtml += '<div class="pbar-wrap"><div class="pbar" id="pbar-'+k+'" style="width:' + pct + '%"></div></div>';
+    d.items.forEach(function(item) {
+      var done = checked[item.id];
+      panelHtml += '<div class="cl-item"><div class="cl-box' + (done?' checked':'') + '" onclick="toggle(\'' + item.id + '\',\'' + k + '\')" id="box-' + item.id + '"></div>'
+        + '<div class="cl-text' + (done?' struck':'') + '" id="txt-' + item.id + '">' + item.text + '</div></div>';
+    });
+    panelHtml += '</div>';
+  });
+  document.getElementById('cl-panels').innerHTML = panelHtml;
+}
+
+function selectNode(key) {
+  activeKey = key;
+  buildAll();
+}
+
+function toggle(id, key) {
+  checked[id] = !checked[id];
+  // Update just the item
+  var box = document.getElementById('box-' + id);
+  var txt = document.getElementById('txt-' + id);
+  if(box) box.classList.toggle('checked', checked[id]);
+  if(txt) txt.classList.toggle('struck', checked[id]);
+  // Update progress
+  var d = checklists[key];
+  var doneCount = d.items.filter(function(i){ return checked[i.id]; }).length;
+  var total = d.items.length;
+  var pct = Math.round(doneCount/total*100);
+  var pt = document.getElementById('ptxt-'+key);
+  var pp = document.getElementById('ppct-'+key);
+  var pb = document.getElementById('pbar-'+key);
+  if(pt) pt.textContent = doneCount + ' of ' + total + ' completed';
+  if(pp) pp.textContent = pct + '%';
+  if(pb) pb.style.width = pct + '%';
+  // Update tab done state
+  var tab = document.getElementById('tab-'+key);
+  if(tab) {
+    var allDone = d.items.every(function(i){ return checked[i.id]; });
+    tab.classList.toggle('done-tab', allDone);
+    tab.textContent = (allDone?'✓ ':'') + d.label;
+    if(key === activeKey) tab.classList.add('active');
+  }
+}
+
+function showModal() {
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function dismissVenue() {
+  var c = document.getElementById('venue-card');
+  c.style.transition = 'opacity .25s';
+  c.style.opacity = '0';
+  setTimeout(function(){ c.style.display='none'; }, 260);
+}
+function openVenueModal() {
+  document.getElementById('venue-overlay').classList.add('open');
+}
+function closeVenueModal() {
+  document.getElementById('venue-overlay').classList.remove('open');
+}
+function toggleVenueFields(radio) {
+  var fields = document.getElementById('venue-fields');
+  fields.style.display = (radio.value === 'inperson' || radio.value === 'mix') ? 'flex' : 'none';
+}
+function submitVenue() {
+  closeVenueModal();
+  dismissVenue();
+  showToast('✅ Venue details shared — thank you!');
+}
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:#111827;color:white;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;z-index:400;font-family:DM Sans,sans-serif;white-space:nowrap';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(function(){ t.remove(); },300); }, 2400);
+}
+
+// Init
+buildAll();
+</script>
+</body>
+</html>
