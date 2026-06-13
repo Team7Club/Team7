@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Club — Leader Dashboard (Pilot)</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#C7053D;--red-l:#FDF0F3;
+  --grn:#8CC04B;--grn-d:#5E8A27;--grn-l:#F3F8E8;
+  --dark:#111827;--slate:#374151;--muted:#6B7280;
+  --bg:#F9FAFB;--white:#fff;--border:#E5E7EB;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.logo{display:flex;align-items:center;gap:9px}
+.logo svg{width:30px;height:30px}
+.logo-text{font-weight:700;font-size:15px;color:var(--red)}
+.tdiv{width:1px;height:26px;background:var(--border)}
+.tlabel{font-size:12px;color:var(--muted)}
+.tright{margin-left:auto;display:flex;align-items:center;gap:9px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.aname{font-size:13px;font-weight:600;color:var(--slate)}
+.layout{display:flex;flex:1}
+.sidebar{width:216px;background:var(--white);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;display:flex;flex-direction:column;gap:1px}
+.nlbl{font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--muted);padding:6px 20px 2px;text-transform:uppercase}
+.nitem{display:flex;align-items:center;gap:9px;padding:9px 20px;font-size:13px;font-weight:500;color:var(--slate);cursor:pointer;transition:background .1s}
+.nitem:hover:not(.dim){background:var(--bg)}
+.nitem.active{background:var(--grn-l);color:var(--grn-d);font-weight:700;border-right:3px solid var(--grn-d)}
+.nitem.dim{opacity:.4;cursor:default}
+.nbadge{font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--border);color:var(--muted);margin-left:auto}
+.nsep{height:1px;background:var(--border);margin:10px 16px}
+.main{flex:1;overflow-y:auto}
+.content{max-width:820px;margin:0 auto;padding:32px 32px 60px;min-height:calc(100vh - 56px)}
+
+/* BANNER */
+.banner{background:var(--red);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:24px}
+.banner h2{font-family:'DM Serif Display',serif;font-size:21px;font-weight:400;margin-bottom:5px}
+.banner p{font-size:13px;opacity:.9;line-height:1.55}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:24px}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:24px}
+
+/* TIMELINE */
+.timeline{display:flex;align-items:flex-start;position:relative;padding-bottom:4px}
+.timeline::before{content:'';position:absolute;top:22px;left:22px;right:22px;height:2px;background:var(--border);z-index:0}
+.tnode{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:1;cursor:pointer}
+.tcirc{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--border);background:var(--white);transition:all .15s;position:relative}
+.tcirc:hover{transform:scale(1.07);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.tcirc.done{background:var(--grn-d);border-color:var(--grn-d);color:#fff}
+.tcirc.active-node{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 0 5px var(--red-l)}
+.tcirc.upcoming{background:var(--white);color:var(--muted)}
+.tcirc.locked{background:var(--bg);color:var(--muted);cursor:default}
+.tcirc.locked:hover{transform:none;box-shadow:none}
+.tcirc.selected{outline:3px solid var(--red);outline-offset:3px}
+.here-pill{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.tline{flex:1;height:2px;margin-top:22px;background:var(--border)}
+.tline.done{background:var(--grn-d)}
+.tlabel{font-size:11px;font-weight:700;margin-top:8px;color:var(--dark);text-align:center}
+.tsub{font-size:10px;color:var(--muted);text-align:center;margin-top:2px;line-height:1.3}
+
+/* CHECKLIST PANEL — appears below timeline */
+.cl-panel{margin-top:24px;padding-top:22px;border-top:1.5px solid var(--border);display:none}
+.cl-panel.open{display:block}
+.cl-day-label{font-size:14px;font-weight:700;color:var(--red);margin-bottom:14px}
+.prow{display:flex;justify-content:space-between;margin-bottom:6px}
+.prow span{font-size:12px;color:var(--muted)}
+.prow strong{font-size:12px;color:var(--grn-d);font-weight:700}
+.pbar-w{background:var(--bg);border-radius:99px;height:5px;margin-bottom:18px;overflow:hidden}
+.pbar{height:100%;background:var(--grn-d);border-radius:99px;transition:width .35s}
+.clitem{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.clitem:last-child{border-bottom:none;padding-bottom:0}
+.clbox{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.clbox.checked{background:var(--grn-d);border-color:var(--grn-d)}
+.clbox.checked::after{content:'✓';color:#fff;font-size:11px;font-weight:700}
+.cltext{font-size:13px;color:var(--slate);line-height:1.5;flex:1}
+.cltext.struck{color:var(--muted);text-decoration:line-through}
+.lock-panel{margin-top:24px;padding:18px;background:var(--bg);border-radius:10px;text-align:center;font-size:13px;color:var(--muted);display:none}
+.lock-panel.open{display:block}
+
+/* SELF-HELP KITS — always visible */
+.kits-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.kit-card{background:var(--grn-l);border:1px solid var(--grn);border-radius:12px;padding:18px 20px}
+.kit-icon{font-size:22px;margin-bottom:9px}
+.kit-title{font-size:13px;font-weight:700;color:var(--grn-d);margin-bottom:5px}
+.kit-desc{font-size:12px;color:var(--slate);line-height:1.55;margin-bottom:12px}
+.kit-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--grn-d);text-decoration:none;padding:6px 14px;border:1.5px solid var(--grn-d);border-radius:99px;transition:background .12s}
+.kit-link:hover{background:var(--grn-d);color:#fff}
+
+/* KITS SCREEN */
+.screen{display:none}.screen.active{display:block}
+.kit-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--grn-d);text-decoration:none;padding:6px 14px;border:1.5px solid var(--grn-d);border-radius:99px;transition:background .12s}
+.kit-link:hover{background:var(--grn-d);color:#fff}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mtitle{font-size:16px;font-weight:700}
+.mx{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
+.mbody{font-size:13px;color:var(--slate);line-height:1.6;margin-bottom:20px}
+.mbtn{width:100%;padding:11px;background:var(--red);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.proto{position:fixed;bottom:18px;right:18px;background:rgba(17,24,39,.75);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:99px;pointer-events:none;z-index:300}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="#C7053D"/><path d="M8 10h8a5 5 0 010 10H8V10z" fill="white"/><circle cx="19" cy="19.5" r="3.5" fill="white"/></svg>
+    <span class="logo-text">Code Club</span>
+  </div>
+  <div class="tdiv"></div>
+  <span class="tlabel">Leader Dashboard — Pilot</span>
+  <div class="tright">
+    <div class="avatar">AS</div>
+    <span class="aname">Alex Smith</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nlbl">Menu</div>
+    <div class="nitem active" onclick="goJourney(this)">🏠 Home</div>
+    <div class="nitem" onclick="goKits(this)">📦 Self-help kits</div>
+    <div class="nsep"></div>
+    <div class="nlbl">Coming next</div>
+    <div class="nitem dim">📚 Teaching materials <span class="nbadge">v2</span></div>
+    <div class="nitem dim">📅 Session calendar <span class="nbadge">v2</span></div>
+    <div class="nitem dim">👥 Common Room <span class="nbadge">v3</span></div>
+    <div class="nitem dim">❓ Support <span class="nbadge">v3</span></div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <div class="screen active" id="s-journey">
+      <div class="banner">
+        <h2>You are a confirmed Code Club Leader 🎉</h2>
+        <p>Welcome to the community. Track your progress and see what comes next for your club.</p>
+      </div>
+
+      <!-- SESSION TYPE QUESTION -->
+      <div class="card" id="session-type-card">
+        <div class="card-title">How do you plan to run your sessions?</div>
+        <div class="card-sub">This helps us point you to the right support kit</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:0" id="session-btns">
+          <div onclick="chooseSession('inperson')" id="btn-inperson" style="border:2px solid var(--border);border-radius:12px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .15s">
+            <div style="font-size:28px;margin-bottom:8px">🏫</div>
+            <div style="font-size:13px;font-weight:700;color:var(--dark)">In person</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">At a school, library, or venue</div>
+          </div>
+          <div onclick="chooseSession('online')" id="btn-online" style="border:2px solid var(--border);border-radius:12px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .15s">
+            <div style="font-size:28px;margin-bottom:8px">💻</div>
+            <div style="font-size:13px;font-weight:700;color:var(--dark)">Online</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Via video call or live stream</div>
+          </div>
+          <div onclick="chooseSession('combo')" id="btn-combo" style="border:2px solid var(--border);border-radius:12px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .15s">
+            <div style="font-size:28px;margin-bottom:8px">🔀</div>
+            <div style="font-size:13px;font-weight:700;color:var(--dark)">Combination</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Mix of in-person and online</div>
+          </div>
+        </div>
+
+        <!-- Venue prompt — shown for in-person or combination -->
+        <div id="venue-prompt" style="display:none;margin-top:18px;background:var(--grn-l);border:1px solid var(--grn);border-radius:10px;padding:16px 18px">
+          <div style="font-size:13px;font-weight:700;color:var(--grn-d);margin-bottom:4px">📍 Tell us about your venue</div>
+          <div style="font-size:12px;color:var(--slate);margin-bottom:12px">So we can make sure you have what you need before your first session.</div>
+          <input id="venue-input" type="text" placeholder="e.g. St Mary's Primary School, Library Room 2…" style="width:100%;padding:9px 12px;border:1.5px solid var(--grn);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;color:var(--dark);background:var(--white)">
+          <div style="margin-top:10px;font-size:12px;color:var(--muted)">✓ Confirmed venue means we can send you location-specific setup tips closer to your first session.</div>
+        </div>
+
+        <!-- Kit recommendation — shown after choosing -->
+        <div id="kit-recommendation" style="display:none;margin-top:18px;border-top:1.5px solid var(--border);padding-top:18px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Recommended for you</div>
+          <div id="kit-rec-content"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Your journey</div>
+        <div class="card-sub">Click any milestone to see its checklist</div>
+
+        <div class="timeline">
+          <div class="tnode" onclick="selectDay('day0')">
+            <div class="tcirc done" id="c-day0">✓</div>
+            <div class="tlabel">Day 0</div>
+          </div>
+          <div class="tline done"></div>
+          <div class="tnode" onclick="selectDay('day7')">
+            <div class="tcirc active-node" id="c-day7">
+              <div class="here-pill">▶ You are here</div>7
+            </div>
+            <div class="tlabel">Day 7</div>
+          </div>
+          <div class="tline"></div>
+          <div class="tnode" onclick="selectDay('day14')">
+            <div class="tcirc upcoming" id="c-day14">14</div>
+            <div class="tlabel">Day 14</div>
+          </div>
+          <div class="tline"></div>
+          <div class="tnode" onclick="selectDay('day30')">
+            <div class="tcirc upcoming" id="c-day30">30</div>
+            <div class="tlabel">Day 30</div>
+          </div>
+          <div class="tline"></div>
+          <div class="tnode" onclick="showLock()">
+            <div class="tcirc locked">🔒</div>
+            <div class="tlabel">Day 90</div>
+            <div class="tsub">Unlocks later</div>
+          </div>
+          <div class="tline"></div>
+          <div class="tnode" onclick="showLock()">
+            <div class="tcirc locked">🔒</div>
+            <div class="tlabel">Ongoing</div>
+            <div class="tsub">Unlocks later</div>
+          </div>
+        </div>
+
+        <!-- CHECKLIST — shown inline below timeline -->
+        <div class="cl-panel" id="cl-panel">
+          <div class="cl-day-label" id="cl-day-label"></div>
+          <div class="prow">
+            <span id="prog-txt"></span>
+            <strong id="prog-pct"></strong>
+          </div>
+          <div class="pbar-w"><div class="pbar" id="pbar"></div></div>
+          <div id="cl-items"></div>
+        </div>
+        <div class="lock-panel" id="lock-panel">
+          🔒 This stage unlocks once you have completed your first 30 days and logged your first session.
+        </div>
+      </div>
+
+
+
+      </div><!-- end s-journey -->
+
+      <!-- KITS SCREEN -->
+      <div class="screen" id="s-kits">
+        <div style="margin-bottom:20px">
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--dark);margin-bottom:6px">Self-help kits</div>
+          <div style="font-size:13px;color:var(--muted)">Choose the guide that matches how you plan to run your first session.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+          <!-- Kit 1: In-person -->
+          <div class="card" style="margin-bottom:0;border-top:4px solid var(--grn-d)">
+            <div style="font-size:32px;margin-bottom:14px">🏫</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--dark);margin-bottom:6px">Running an in-person session</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Everything you need before your first face-to-face Code Club session — venue, equipment, safeguarding, and session structure.</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--grn-d);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Venue checklist</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">A suitable space with enough computers or devices (ideally one per learner), stable internet access, and permission from the venue to run regular sessions.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--grn-d);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Safeguarding</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">Ensure you and any co-volunteers have completed the required background checks (e.g. DBS in the UK). Review the <a href="https://codeclub.org/en/resources" target="_blank" style="color:var(--grn-d)">RPF safeguarding guidance</a> before your first session.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--grn-d);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Choose your first project</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">Browse <a href="https://projects.raspberrypi.org/en/codeclub" target="_blank" style="color:var(--grn-d)">projects.raspberrypi.org</a> and pick a beginner-friendly Scratch project. Test it yourself on the devices you will use before the session.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--grn-d);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Session structure (60–90 min)</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">10 min welcome + rules → 40 min guided project → 10 min show-and-tell → 5 min wrap-up. Use a <a href="https://codeclub.org/en/resources" target="_blank" style="color:var(--grn-d)">session checklist</a> from RPF to plan before, during, and after.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--grn-d);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Prepare your club profile</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">Complete your club profile on the Code Club platform and add your session date so parents can find and book.</div>
+                </div>
+              </div>
+            </div>
+            <a href="https://codeclub.org/en/resources" target="_blank" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--grn-d);padding:8px 16px;border:1.5px solid var(--grn-d);border-radius:99px;text-decoration:none;transition:all .12s" onmouseover="this.style.background='var(--grn-d)';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='var(--grn-d)'">RPF leader resources →</a>
+          </div>
+
+          <!-- Kit 2: Online -->
+          <div class="card" style="margin-bottom:0;border-top:4px solid var(--red)">
+            <div style="font-size:32px;margin-bottom:14px">💻</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--dark);margin-bottom:6px">Running an online session</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Key requirements for hosting your first Code Club session online safely — tools, safeguarding, and session design. Based on RPF's <a href="https://static.raspberrypi.org/files/clubs/Guidance_on_hosting_online_club_sessions.pdf" target="_blank" style="color:var(--red)">official online guidance</a>.</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Safeguarding online</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">Always have at least two adults present. At least one must be a registered volunteer with an up-to-date background check. No one-to-one sessions with a young person. Share the <a href="https://www.raspberrypi.org/safeguarding" target="_blank" style="color:var(--red)">RPF safeguarding page</a> with parents.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Choose a safe online tool</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">Use a tool that supports: private/closed groups, a waiting room, and the ability to mute or remove participants. RPF recommends Zoom, Google Meet, or Microsoft Teams. Avoid tools that allow private messaging between learners.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Get parental consent</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">Parents must consent before their child joins an online session. A parent or adult should be present in the home during the session. Do not share session links publicly.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Choose your first project</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">Pick a browser-based Scratch project from <a href="https://projects.raspberrypi.org/en/codeclub" target="_blank" style="color:var(--red)">projects.raspberrypi.org</a> — no installation needed. Test screen sharing and the project link before your session.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--dark)">Session structure (60–90 min)</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">5 min tech check → 10 min welcome + code of conduct reminder → 40 min guided project (screen share) → 10 min showcase → 5 min close. Avoid recording the session without consent.</div>
+                </div>
+              </div>
+            </div>
+            <a href="https://static.raspberrypi.org/files/clubs/Guidance_on_hosting_online_club_sessions.pdf" target="_blank" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--red);padding:8px 16px;border:1.5px solid var(--red);border-radius:99px;text-decoration:none;transition:all .12s" onmouseover="this.style.background='var(--red)';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='var(--red)'">RPF online guidance →</a>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </main>
+</div><!-- end layout -->
+
+<div class="proto">Pilot v1 · Not for production</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle" id="mtitle"></div><button class="mx" onclick="closeModal()">✕</button></div>
+    <div class="mbody" id="mbody"></div>
+    <button class="mbtn" onclick="closeModal()">Got it</button>
+  </div>
+</div>
+
+<script>
+var checklists = {
+  day0: { label:'Day 0 checklist', items:[
+    {id:'d0a', text:'Complete your club profile'},
+    {id:'d0b', text:'Receive your welcome confirmation from Code Club'},
+  ]},
+  day7: { label:'Day 7 checklist', items:[
+    {id:'d7a', text:'Confirm how your club will run — in person, online, or a mix of both'},
+    {id:'d7b', text:'Lock in a regular time and place or platform for your sessions'},
+    {id:'d7c', text:'Invite a co-volunteer or mentor if you would like extra support'},
+  ]},
+  day14: { label:'Day 14 checklist', items:[
+    {id:'d14a', text:'Browse the RPF project library and choose a starting project'},
+    {id:'d14b', text:'Make sure your setup — devices, accounts, or video platform — is ready'},
+    {id:'d14c', text:'Let your learners or their parents and guardians know when you start'},
+  ]},
+  day30: { label:'Day 30 checklist', items:[
+    {id:'d30a', text:'Run your first session with learners'},
+    {id:'d30b', text:'Log the session in your club profile'},
+    {id:'d30c', text:'Share how it went with Code Club'},
+  ]}
+};
+
+var checked = { d0a:true, d0b:true };
+var activeDay = null;
+
+function selectDay(key) {
+  // Toggle off if clicking same node
+  if (activeDay === key) {
+    activeDay = null;
+    document.getElementById('cl-panel').classList.remove('open');
+    document.getElementById('lock-panel').classList.remove('open');
+    clearSelected();
+    return;
+  }
+  activeDay = key;
+  document.getElementById('lock-panel').classList.remove('open');
+  renderChecklist(key);
+  clearSelected();
+  var circ = document.getElementById('c-' + key);
+  if (circ) circ.classList.add('selected');
+}
+
+function clearSelected() {
+  ['day0','day7','day14','day30'].forEach(function(k){
+    var c = document.getElementById('c-'+k);
+    if (c) c.classList.remove('selected');
+  });
+}
+
+function renderChecklist(key) {
+  var d = checklists[key];
+  document.getElementById('cl-day-label').textContent = d.label;
+  var doneCount = d.items.filter(function(i){ return checked[i.id]; }).length;
+  var total = d.items.length;
+  updateProgress(key, doneCount, total);
+  var html = '';
+  d.items.forEach(function(item){
+    var dn = checked[item.id];
+    html += '<div class="clitem">'
+      + '<div class="clbox'+(dn?' checked':'')+'" onclick="toggle(\''+item.id+'\',\''+key+'\')" id="box-'+item.id+'"></div>'
+      + '<div class="cltext'+(dn?' struck':'')+'" id="txt-'+item.id+'">'+item.text+'</div>'
+      + '</div>';
+  });
+  document.getElementById('cl-items').innerHTML = html;
+  document.getElementById('cl-panel').classList.add('open');
+}
+
+function updateProgress(key, done, total) {
+  var pct = Math.round(done / total * 100);
+  document.getElementById('prog-txt').textContent = done + ' of ' + total + ' completed';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('pbar').style.width = pct + '%';
+}
+
+function toggle(id, key) {
+  checked[id] = !checked[id];
+  var box = document.getElementById('box-' + id);
+  var txt = document.getElementById('txt-' + id);
+  if (box) box.classList.toggle('checked', checked[id]);
+  if (txt) txt.classList.toggle('struck', checked[id]);
+  var d = checklists[key];
+  var done = d.items.filter(function(i){ return checked[i.id]; }).length;
+  updateProgress(key, done, d.items.length);
+}
+
+function showLock() {
+  activeDay = null;
+  clearSelected();
+  document.getElementById('cl-panel').classList.remove('open');
+  document.getElementById('lock-panel').classList.add('open');
+}
+
+
+function goKits(el) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.nitem').forEach(function(n){ n.classList.remove('active'); });
+  document.getElementById('s-kits').classList.add('active');
+  el.classList.add('active');
+  document.querySelector('.main').scrollTop = 0;
+}
+function goJourney(el) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.nitem').forEach(function(n){ n.classList.remove('active'); });
+  document.getElementById('s-journey').classList.add('active');
+  el.classList.add('active');
+  document.querySelector('.main').scrollTop = 0;
+}
+function openModal(title,body){ document.getElementById('mtitle').textContent=title; document.getElementById('mbody').textContent=body; document.getElementById('overlay').classList.add('open'); }
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+
+var sessionChoice = null;
+
+var kitRecs = {
+  inperson: {
+    icon: '🏫',
+    title: 'Running an in-person session',
+    desc: 'Venue checklist, safeguarding, choosing your first project, and session structure for a face-to-face club.',
+    color: 'var(--grn-d)',
+    bg: 'var(--grn-l)',
+    border: 'var(--grn)',
+    screen: 'inperson'
+  },
+  online: {
+    icon: '💻',
+    title: 'Running an online session',
+    desc: 'Safe online tools, parental consent, safeguarding, choosing a browser-based project, and session structure.',
+    color: 'var(--red)',
+    bg: 'var(--red-l)',
+    border: '#f5a0b5',
+    screen: 'online'
+  },
+  combo: {
+    icon: '🔀',
+    title: 'Both kits apply to you',
+    desc: 'As you\'re running a mix of in-person and online sessions, take a look at both guides in Self-help kits.',
+    color: 'var(--slate)',
+    bg: 'var(--bg)',
+    border: 'var(--border)',
+    screen: 'combo'
+  }
+};
+
+function chooseSession(type) {
+  sessionChoice = type;
+
+  // Highlight selected button
+  ['inperson','online','combo'].forEach(function(t) {
+    var btn = document.getElementById('btn-' + t);
+    var isSelected = t === type;
+    btn.style.border = isSelected ? '2px solid var(--red)' : '2px solid var(--border)';
+    btn.style.background = isSelected ? 'var(--red-l)' : '';
+  });
+
+  // Show venue prompt for in-person or combo
+  var venuePrompt = document.getElementById('venue-prompt');
+  venuePrompt.style.display = (type === 'inperson' || type === 'combo') ? 'block' : 'none';
+
+  // Show kit recommendation
+  var rec = kitRecs[type];
+  var recEl = document.getElementById('kit-rec-content');
+  if (type === 'combo') {
+    recEl.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+      + kitRecCard(kitRecs.inperson)
+      + kitRecCard(kitRecs.online)
+      + '</div>';
+  } else {
+    recEl.innerHTML = kitRecCard(rec);
+  }
+  document.getElementById('kit-recommendation').style.display = 'block';
+}
+
+function kitRecCard(rec) {
+  return '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:' + rec.bg + ';border:1.5px solid ' + rec.border + ';border-radius:10px;cursor:pointer" onclick="goKitsFromHome()">'
+    + '<div style="font-size:26px">' + rec.icon + '</div>'
+    + '<div style="flex:1">'
+    + '<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:3px">' + rec.title + '</div>'
+    + '<div style="font-size:11px;color:var(--muted);line-height:1.5">' + rec.desc + '</div>'
+    + '</div>'
+    + '<div style="font-size:12px;font-weight:700;color:' + rec.color + ';white-space:nowrap">Open kit →</div>'
+    + '</div>';
+}
+
+function goKitsFromHome() {
+  var kitsNav = document.querySelector('.nitem[onclick="goKits(this)"]');
+  goKits(kitsNav);
+}
+
+// Show Day 7 checklist by default on load
+selectDay('day7');
+</script>
+</body>
+</html>
